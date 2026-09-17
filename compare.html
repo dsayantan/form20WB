@@ -142,6 +142,21 @@
   .chip.on{background:var(--red);color:#fff;border-color:var(--red-d);font-weight:600}
   .chip input{display:none}
   .muted{color:#9c8888;font-size:12.5px;font-style:italic}
+  #report.on{background:var(--red);color:#fff;border-color:var(--red-d);font-weight:600}
+  .rep h3{margin:0 0 4px}
+  .rep .grp{margin-top:12px;border-top:1px solid var(--grid-2);padding-top:10px}
+  .rep .grp:first-of-type{border-top:0;padding-top:0}
+  .rep .who{font-weight:700;color:var(--red-dd);margin-bottom:6px}
+  .rep .line{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;padding:4px 0;font-size:13.5px}
+  .rep .var{min-width:132px;font-weight:600}
+  .rep .r{font-variant-numeric:tabular-nums;color:var(--ink-dim);font-size:12.5px}
+  .rep .bar2{flex:0 0 96px;height:7px;border-radius:4px;background:var(--wash-2);
+             position:relative;overflow:hidden}
+  .rep .bar2 i{position:absolute;top:0;bottom:0;left:50%;background:var(--red)}
+  .rep .bar2 i.neg{background:#5b7fa6}
+  .rep .say{flex:1 1 260px;color:var(--ink-dim)}
+  .rep .caution{margin-top:12px;font-size:12.5px;color:#6b5555;font-style:italic}
+  @media (max-width:640px){ .rep .var{min-width:0;flex:1 1 100%} .rep .bar2{flex:0 0 70px} }
   .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
   @media (max-width:640px){ .ylab{min-width:0;flex:1 1 100%} }
 </style>
@@ -162,6 +177,13 @@
     <div class="fld"><label for="dist" data-i18n="district"></label><select id="dist"></select></div>
     <div class="fld"><label for="ac" data-i18n="ac"></label><select id="ac"></select></div>
     <div class="fld">
+      <label data-i18n="viewBy"></label>
+      <div class="seg" id="viewby">
+        <button data-v="booth" class="on" data-i18n="byBooth"></button>
+        <button data-v="lb" data-i18n="byLb"></button>
+      </div>
+    </div>
+    <div class="fld">
       <label data-i18n="language"></label>
       <div class="seg" id="lang">
         <button data-l="bn" lang="bn">বাংলা</button>
@@ -177,9 +199,11 @@
     <div id="years"></div>
     <div class="bar">
       <button id="clear" data-i18n="cmpClear"></button>
+      <button id="report" data-i18n="report"></button>
       <span class="muted" id="colcount"></span>
     </div>
   </section>
+  <section id="creport" class="panel hide"></section>
   <div id="rowcount" class="rowcount"></div>
   <div id="tw" class="tablewrap hide"><table id="tbl"></table></div>
 </div>
@@ -215,9 +239,25 @@ const I18N = {
     cmpPickAc:'প্রথমে একটি কেন্দ্র বাছুন।',
     cmpPickYears:'কোন কোন নির্বাচন ও কোন কোন দল তুলনা করবেন তা বেছে নিন।',
     cmpNone:'অন্তত একটি নির্বাচনের একটি দল বাছুন।',
-    cmpAllBooths:'সব বুথ', cmpNote:'তুলনা সবসময় শতকরা হারে দেখানো হয়। যে নির্বাচনে কোনও বুথ নেই, সেখানে ঘর ফাঁকা থাকে।',
+    cmpAllBooths:'সব বুথ', cmpNote:'দলের ভোট সবসময় শতকরা হারে দেখানো হয়। যে নির্বাচনে কোনও বুথ নেই, সেখানে ঘর ফাঁকা থাকে।',
     cmpClear:'বাছাই মুছুন', cmpLoading:'তথ্য আসছে…',
-    cmpCols:'{n}টি কলাম', noAcHere:'এই কেন্দ্রের তথ্য এই নির্বাচনে নেই'
+    cmpCols:'{n}টি কলাম', noAcHere:'এই কেন্দ্রের তথ্য এই নির্বাচনে নেই',
+    demo:'জনবিন্যাস (২০২৬ ভোটার তালিকা)', demoNone:'এই কেন্দ্রের জনবিন্যাসের তথ্য নেই',
+    dMuslim:'সংখ্যালঘু %', dAge:'গড় বয়স', dMale:'পুরুষ %', dFemale:'মহিলা %',
+    dSc:'তফসিলি জাতি %', dSt:'তফসিলি উপজাতি %', dSur:'শীর্ষ ৫ পদবি',
+    viewBy:'যেভাবে দেখাবে', byBooth:'বুথ অনুযায়ী', byLb:'স্থানীয় সংস্থা অনুযায়ী',
+    colLb:'স্থানীয় সংস্থা', lbOnly2026:'স্থানীয় সংস্থার ভাগ কেবল ২০২৬-এর জন্য জানা আছে, তাই এই অবস্থায় শুধু ২০২৬-এর কলাম দেখানো হচ্ছে। আগের নির্বাচনগুলির বুথ নম্বর আজকের স্থানীয় সংস্থার সঙ্গে মেলে না।',
+    lbCount:'{n}টি স্থানীয় সংস্থা', untagged:'(স্থানীয় সংস্থা জানা নেই)',
+    report:'সম্পর্ক রিপোর্ট', reportTitle:'ভোট ও জনবিন্যাসের সম্পর্ক',
+    reportOnly26:'সম্পর্ক কেবল ২০২৬-এর দলগুলির জন্য বার করা হয়, কারণ জনবিন্যাসের তথ্যও ২০২৬ ভোটার তালিকার। আগের নির্বাচনের বুথ নম্বর এর সঙ্গে মেলে না।',
+    reportPick:'সম্পর্ক দেখতে ২০২৬-এর অন্তত একটি দল বাছুন।',
+    reportUnitB:'বুথ', reportUnitL:'স্থানীয় সংস্থা',
+    rStrong:'জোরালো', rMedium:'মাঝারি', rWeak:'দুর্বল', rNone:'প্রায় নেই',
+    rPos:'ধনাত্মক', rNeg:'ঋণাত্মক',
+    rLineP:'যে {unit}-এ {var} বেশি, সেখানে {party} বেশি ভোট পেয়েছে।',
+    rLineN:'যে {unit}-এ {var} বেশি, সেখানে {party} কম ভোট পেয়েছে।',
+    rLine0:'{var}-এর সঙ্গে {party}-র ভোটের বলার মতো কোনও মিল নেই।',
+    rCaution:'এটি {n}টি {unit}-এর গড় মিলিয়ে দেখা সম্পর্ক। কোন ভোটার কাকে ভোট দিয়েছেন তা এ থেকে জানা যায় না — কেবল কোন ধরনের এলাকায় কোন দল ভালো করেছে তা বোঝা যায়।'
   },
   en: {
     org:'CPI(M) West Bengal',
@@ -245,9 +285,25 @@ const I18N = {
     cmpPickAc:'Pick a constituency first.',
     cmpPickYears:'Choose the elections and the parties you want set side by side.',
     cmpNone:'Pick at least one party in one election.',
-    cmpAllBooths:'All booths', cmpNote:'The comparison is always shown as a share of valid votes. Where an election has no such booth, the cell is left blank.',
+    cmpAllBooths:'All booths', cmpNote:'Party votes are always shown as a share of valid votes. Where an election has no such booth, the cell is left blank.',
     cmpClear:'Clear selection', cmpLoading:'loading…',
-    cmpCols:'{n} columns', noAcHere:'this constituency has no data for this election'
+    cmpCols:'{n} columns', noAcHere:'this constituency has no data for this election',
+    demo:'Demography (2026 electoral roll)', demoNone:'no demography for this constituency',
+    dMuslim:'Minority %', dAge:'Average age', dMale:'Men %', dFemale:'Women %',
+    dSc:'SC %', dSt:'ST %', dSur:'Top 5 surnames',
+    viewBy:'Show by', byBooth:'Booth', byLb:'Local body',
+    colLb:'Local body', lbOnly2026:'Only 2026 carries a local-body mapping, so this view shows its columns alone. Booth numbers from earlier elections do not line up with today\u2019s local bodies.',
+    lbCount:'{n} local bodies', untagged:'(local body not known)',
+    report:'Correlation report', reportTitle:'Votes against demography',
+    reportOnly26:'The report covers 2026 parties only, because the demography comes from the 2026 roll. Booth numbers from earlier elections do not line up with it.',
+    reportPick:'Pick at least one 2026 party to see the report.',
+    reportUnitB:'booth', reportUnitL:'local body',
+    rStrong:'strong', rMedium:'moderate', rWeak:'weak', rNone:'almost none',
+    rPos:'positive', rNeg:'negative',
+    rLineP:'Where a {unit} has more {var}, {party} polled more.',
+    rLineN:'Where a {unit} has more {var}, {party} polled less.',
+    rLine0:'{var} and the {party} vote move together hardly at all.',
+    rCaution:'This compares averages across {n} {unit}s. It cannot tell you how any individual voted — only what kind of area each party did well in.'
   }
 };
 let LANG = 'bn';
@@ -409,21 +465,70 @@ const ALLYEARS = IX.years.map(y => y.year);
 const D0 = {acmap:IX.acmap, dists:IX.dists,
             have:[...new Set([].concat.apply([], IX.years.map(y => y.have)))]};
 
-const S = {dist:'', ac:null, sel:{}, key:'ps', dir:1};
+const S = {dist:'', ac:null, sel:{}, demo:[], view:'booth', report:false, key:'ps', dir:1};
 const grid = new Grid($('tbl'), S);
+
+/* The 2026 roll summary: one row per booth, same numbering as the Form 20.
+   Kept in its own file and fetched only when a tag is ticked. */
+const DTAGS = [['muslim','dMuslim'], ['age','dAge'], ['male','dMale'],
+               ['female','dFemale'], ['sc','dSc'], ['st','dSt'], ['sur','dSur']];
+function demoRows(){
+  const D = window.DEMO;
+  if (!D || S.ac == null) return null;
+  return D.acs[String(S.ac)] || null;
+}
+function demoIndex(key){ return (window.DEMO ? window.DEMO.fields.indexOf(key) : -1); }
+/* a row is [part, voters, male, female, age, muslim, sc, st, "name:pct|…"] */
+function demoMap(){
+  const rows = demoRows();
+  if (!rows) return null;
+  const m = new Map();
+  for (const r of rows) m.set(r[0], r);
+  return m;
+}
+function surList(sTxt){
+  return String(sTxt || '').split('|').filter(Boolean).map(x => {
+    const i = x.lastIndexOf(':');
+    return [x.slice(0, i), parseFloat(x.slice(i + 1)) || 0];
+  });
+}
+/* One reading of a row, whichever view is on — used by the table and, so the
+   two can never drift apart, by the report as well. */
+let DMAP = null;
+function demoValue(r, k){
+  if (S.view === 'lb') return r.voters ? r.wsum[k] / r.voters : null;
+  const d = DMAP && DMAP.get(r.ps);
+  const i = demoIndex(k) + 1;
+  return d && d[i] != null ? d[i] : null;
+}
+function partyValue(r, p){
+  if (S.view === 'lb') return r.tot > 0 ? pc(r.v[p.i] || 0, r.tot) : null;
+  const b = r._y[p.y] && r._y[p.y].get(r.ps);
+  return b ? pc(b[1][p.i], b[2]) : null;
+}
+function surText(pairs){
+  return pairs.slice(0, 5).map(p => `${p[0]} (${p[1].toFixed(1)}%)`).join(', ');
+}
 
 /* The year files are big, so one is fetched only when its box is ticked.
    A plain <script> tag rather than fetch(), so this works off the disk. */
 const pending = {};
-function loadYear(y){
-  if (window.EL && window.EL[y]) return Promise.resolve();
-  if (pending[y]) return pending[y];
-  return pending[y] = new Promise(res => {
+function loadFile(key, src){
+  if (pending[key]) return pending[key];
+  return pending[key] = new Promise(res => {
     const s = document.createElement('script');
-    s.src = 'data/' + y + '.js';
+    s.src = src;
     s.onload = s.onerror = () => res();
     document.head.appendChild(s);
   });
+}
+function loadYear(y){
+  if (window.EL && window.EL[y]) return Promise.resolve();
+  return loadFile('y' + y, 'data/' + y + '.js');
+}
+function loadDemo(){
+  if (window.DEMO) return Promise.resolve();
+  return loadFile('demo', 'data/demography.js');
 }
 function acIn(y, no){
   const D = window.EL && window.EL[y];
@@ -454,6 +559,21 @@ function drawPanel(){
     });
     h += '</div></div>';
   }
+  /* the roll summary only exists for 2026, so its tags sit on their own row */
+  const dm = demoRows();
+  h += `<div class="yrow"><span class="ylab">${esc(t('demo'))}</span>`;
+  if (window.DEMO && !dm) {
+    h += `<span class="muted">${esc(t('demoNone'))}</span>`;
+  } else {
+    h += '<div class="chips">';
+    for (const [k, lab] of DTAGS) {
+      const on = S.demo.indexOf(k) >= 0;
+      h += `<label class="chip${on ? ' on' : ''}">`
+         + `<input type="checkbox" data-d="${k}"${on ? ' checked' : ''}>${esc(t(lab))}</label>`;
+    }
+    h += '</div>';
+  }
+  h += '</div>';
   $('years').innerHTML = h;
 }
 
@@ -465,47 +585,182 @@ function chosen(){
       if (ac && ac.parties[i]) out.push({y:y, i:i, p:ac.parties[i], ac:ac});
     }
   }
-  return out;
+  /* a local body is only known for 2026, so that view drops the rest */
+  return S.view === 'lb' ? out.filter(c => c.y === 2026) : out;
+}
+function chosenDemo(){
+  return demoRows() ? S.demo.slice() : [];
+}
+function ac2026(){ return acIn(2026, S.ac); }
+
+/* Pearson's r over whatever is on screen — booths, or local bodies once they
+   are gathered. Pairs where either side is missing are left out. */
+function correl(xs, ys){
+  let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let i = 0; i < xs.length; i++) {
+    const x = xs[i], y = ys[i];
+    if (x == null || y == null || isNaN(x) || isNaN(y)) continue;
+    n++; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y;
+  }
+  if (n < 3) return null;
+  const d = Math.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy));
+  return d === 0 ? null : {r:(n * sxy - sx * sy) / d, n:n};
+}
+function strength(r){
+  const a = Math.abs(r);
+  return a >= 0.7 ? 'rStrong' : a >= 0.4 ? 'rMedium' : a >= 0.2 ? 'rWeak' : 'rNone';
+}
+
+/* The report only covers 2026 parties: the demography is the 2026 roll, and
+   earlier elections number their booths differently, so pairing them would be
+   comparing two different sets of booths. */
+function renderReport(rows, cols, picks){
+  const box = $('creport');
+  if (!S.report) { box.classList.add('hide'); return; }
+  box.classList.remove('hide');
+  const unit = t(S.view === 'lb' ? 'reportUnitL' : 'reportUnitB');
+  const p26 = picks.filter(p => p.y === 2026);
+  const dm = demoRows();
+  if (!dm) { box.innerHTML = `<div class="rep"><h3>${esc(t('reportTitle'))}</h3>`
+           + `<p class="muted">${esc(t('demoNone'))}</p></div>`; return; }
+  if (!p26.length) { box.innerHTML = `<div class="rep"><h3>${esc(t('reportTitle'))}</h3>`
+           + `<p class="muted">${esc(t('reportPick'))}</p></div>`; return; }
+
+  const vars = DTAGS.filter(d => d[0] !== 'sur');
+  const series = {};
+  for (const [k] of vars) series[k] = rows.map(r => demoValue(r, k));
+
+  let h = `<div class="rep"><h3>${esc(t('reportTitle'))}</h3>`;
+  if (picks.length > p26.length) h += `<p class="muted">${esc(t('reportOnly26'))}</p>`;
+  let n = 0;
+  for (const p of p26) {
+    const xs = rows.map(r => partyValue(r, p));
+    const lines = [];
+    for (const [k, lab] of vars) {
+      const c = correl(xs, series[k]);
+      if (!c) continue;
+      n = c.n;
+      const key = strength(c.r);
+      const say = key === 'rNone'
+        ? t('rLine0', {var:t(lab), party:p.p[0]})
+        : t(c.r > 0 ? 'rLineP' : 'rLineN', {unit:unit, var:t(lab), party:p.p[0]});
+      lines.push({r:c.r, lab:t(lab), key:key, say:say});
+    }
+    lines.sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
+    h += `<div class="grp"><div class="who">${esc(p.p[0])} · ${p.y}</div>`;
+    for (const l of lines) {
+      const w = Math.round(Math.min(Math.abs(l.r), 1) * 48);
+      const bar = l.r >= 0 ? `left:50%;width:${w}px` : `left:${50 - w * 100 / 96}%;width:${w}px`;
+      h += `<div class="line"><span class="var">${esc(l.lab)}</span>`
+         + `<span class="bar2"><i class="${l.r < 0 ? 'neg' : ''}" style="${bar}"></i></span>`
+         + `<span class="r">r = ${l.r.toFixed(2)} · ${esc(t(l.key))} ${esc(t(l.r >= 0 ? 'rPos' : 'rNeg'))}</span>`
+         + `<span class="say">${esc(l.say)}</span></div>`;
+    }
+    h += '</div>';
+  }
+  h += `<div class="caution">${esc(t('rCaution', {n:fmt(n), unit:unit}))}</div></div>`;
+  box.innerHTML = h;
 }
 
 function render(){
   drawPanel();
   const picks = S.ac == null ? [] : chosen();
-  $('colcount').textContent = picks.length ? t('cmpCols', {n:picks.length}) : '';
-  $('tw').classList.toggle('hide', !picks.length);
+  const dtags = S.ac == null ? [] : chosenDemo();
+  const ncol = picks.length + dtags.length;
+  $('colcount').textContent = ncol ? t('cmpCols', {n:ncol}) : '';
+  $('tw').classList.toggle('hide', !ncol);
   const m = $('msg');
   m.className = 'note';
-  if (S.ac == null) { m.innerHTML = t('cmpPickAc'); $('rowcount').textContent = ''; $('tbl').innerHTML = ''; return; }
-  if (!picks.length) { m.innerHTML = t('cmpNone'); $('rowcount').textContent = ''; $('tbl').innerHTML = ''; return; }
-  m.innerHTML = t('cmpNote');
+  if (S.ac == null) { m.innerHTML = t('cmpPickAc'); $('rowcount').textContent = '';
+    $('tbl').innerHTML = ''; $('creport').classList.add('hide'); return; }
+  if (!ncol) { m.innerHTML = t('cmpNone'); $('rowcount').textContent = '';
+    $('tbl').innerHTML = ''; $('creport').classList.add('hide'); return; }
 
-  /* every booth number any chosen election lists, so a year that is short of
-     booths simply leaves those cells empty */
-  const byYear = {};
-  const all = new Set();
-  for (const p of picks) {
-    if (byYear[p.y]) continue;
-    const map = new Map();
-    for (const b of p.ac.booths) { map.set(b[0], b); all.add(b[0]); }
-    byYear[p.y] = map;
+  const lb = S.view === 'lb';
+  const dropped = lb && ALLYEARS.some(y => y !== 2026 && (S.sel[y] || []).length);
+  m.innerHTML = dropped ? t('lbOnly2026') : t('cmpNote');
+  if (dropped) m.className = 'note warn';
+
+  const dmap = DMAP = demoMap();
+  const di = k => demoIndex(k) + 1;          /* row is [part, …fields, surnames] */
+  const SUR = 8;
+
+  let rows, unit;
+  if (lb) {
+    /* gather the 2026 booths under their local body, and carry every chosen
+       column through the same gathering */
+    const ac = ac2026();
+    const g = new Map();
+    for (const b of (ac ? ac.booths : [])) {
+      const key = b[3] || t('untagged');
+      let e = g.get(key);
+      if (!e) { e = {ps:key, v:[], tot:0, voters:0, wsum:{}, sur:new Map()}; g.set(key, e); }
+      for (let i = 0; i < b[1].length; i++) e.v[i] = (e.v[i] || 0) + b[1][i];
+      e.tot += b[2];
+      const d = dmap && dmap.get(b[0]);
+      if (d) {
+        const w = d[1] || 0;                 /* weight the shares by the roll */
+        e.voters += w;
+        for (const [k] of DTAGS) {
+          if (k === 'sur') continue;
+          const v = d[di(k)];
+          if (v != null) e.wsum[k] = (e.wsum[k] || 0) + v * w;
+        }
+        for (const [nm, pct] of surList(d[SUR])) e.sur.set(nm, (e.sur.get(nm) || 0) + pct * w);
+      }
+    }
+    rows = [...g.values()].sort((a, b) => String(a.ps).localeCompare(String(b.ps), LANG));
+    unit = 'lb';
+  } else {
+    const byYear = {};
+    const all = new Set();
+    for (const p of picks) {
+      if (byYear[p.y]) continue;
+      const map = new Map();
+      for (const b of p.ac.booths) { map.set(b[0], b); all.add(b[0]); }
+      byYear[p.y] = map;
+    }
+    if (dtags.length && dmap) for (const k of dmap.keys()) all.add(k);
+    rows = [...all].sort((a, b) => boothKey(a) - boothKey(b))
+                   .map(ps => ({ps:ps, _y:byYear}));
+    unit = 'booth';
   }
-  const rows = [...all].sort((a, b) => boothKey(a) - boothKey(b)).map(ps => ({ps:ps}));
 
-  const cols = [{k:'ps', h:esc(t('colBooth')), cls:'', val:r => boothKey(r.ps),
-                 cell:r => `<td class="dim">${esc(r.ps)}</td>`}];
+  const cols = [{k:'ps', h:esc(t(lb ? 'colLb' : 'colBooth')), cls:lb ? 'l' : '',
+                 val:r => lb ? String(r.ps).toLowerCase() : boothKey(r.ps),
+                 cell:r => `<td class="${lb ? 'l ' : ''}dim">${esc(r.ps)}</td>`}];
+
   picks.forEach((p, n) => {
-    const map = byYear[p.y];
-    const get = r => {
-      const b = map.get(r.ps);
-      return b ? pc(b[1][p.i], b[2]) : null;
-    };
+    const get = r => partyValue(r, p);
     cols.push({k:'x' + n, h:`${p.y}<br>${esc(p.p[0])}`, title:`${p.y} · ${p.p[1]}`,
                val:get,
                cell:r => { const v = get(r);
                  return v == null ? '<td class="na">—</td>' : `<td>${p2(v)}</td>`; }});
   });
 
-  const groups = [{h:esc(t('grpBooth')), span:2, align:'left'}];
+  dtags.forEach((k, n) => {
+    const lab = (DTAGS.find(d => d[0] === k) || [k, k])[1];
+    let get, cell;
+    if (k === 'sur') {
+      get = r => {
+        if (lb) return r.sur.size ? surText([...r.sur].map(x => [x[0], x[1] / (r.voters || 1)])
+                                    .sort((a, b) => b[1] - a[1])) : null;
+        const d = dmap && dmap.get(r.ps);
+        return d ? surText(surList(d[SUR])) : null;
+      };
+      cell = r => { const v = get(r);
+        return v == null ? '<td class="na">—</td>' : `<td class="l">${esc(v)}</td>`; };
+    } else {
+      get = r => demoValue(r, k);
+      cell = r => { const v = get(r);
+        return v == null ? '<td class="na">—</td>'
+                         : `<td>${k === 'age' ? v.toFixed(1) : p2(v)}</td>`; };
+    }
+    cols.push({k:'d' + n, h:esc(t(lab)), cls:k === 'sur' ? 'l' : '',
+               title:t('demo'), val:get, cell:cell});
+  });
+
+  const groups = [{h:esc(t(lb ? 'colLb' : 'grpBooth')), span:2, align:'left'}];
   let run = null;
   for (const p of picks) {
     if (run && run.y === p.y) { run.span++; continue; }
@@ -513,27 +768,51 @@ function render(){
     groups.push(run);
   }
   for (const g of groups) if (g.y) g.h = g.y + ' · ' + esc(t(KIND[g.y]));
+  if (dtags.length) groups.push({h:esc(t('demo')), span:dtags.length});
 
-  grid.draw(cols, rows, {groups:groups, foot:rs => {
-    let h = `<td class="l">${esc(t('footTotal', {n:fmt(rs.length)}))}</td>`;
-    for (const p of picks) {
-      let v = 0, tot = 0;
-      for (const b of p.ac.booths) { v += b[1][p.i]; tot += b[2]; }
-      h += `<td>${p2(pc(v, tot))}</td>`;
-    }
-    return h;
-  }});
-  $('rowcount').textContent = t('boothsShown', {n:fmt(rows.length)});
+  grid.draw(cols, rows, {groups:groups});
+  $('rowcount').textContent = lb ? t('lbCount', {n:fmt(rows.length)})
+                                 : t('boothsShown', {n:fmt(rows.length)});
+  renderReport(rows, cols, picks);
 }
 
 $('dist').onchange = e => { S.dist = e.target.value; S.ac = null; S.sel = {};
   fillACs($('ac'), D0, S.dist, null); render(); };
 $('ac').onchange = e => { S.ac = e.target.value ? +e.target.value : null; S.sel = {};
   S.key = 'ps'; S.dir = 1; render(); };
-$('clear').onclick = () => { S.sel = {}; render(); };
+$('clear').onclick = () => { S.sel = {}; S.demo = []; render(); };
+
+$('report').onclick = () => {
+  S.report = !S.report;
+  $('report').classList.toggle('on', S.report);
+  if (S.report && !window.DEMO) { render(); loadDemo().then(render); }
+  else render();
+};
+
+$('viewby').onclick = e => {
+  const b = e.target.closest('button[data-v]');
+  if (!b || b.dataset.v === S.view) return;
+  S.view = b.dataset.v;
+  [...$('viewby').children].forEach(x => x.classList.toggle('on', x === b));
+  S.key = 'ps'; S.dir = 1;
+  /* the local bodies themselves come from the 2026 data, whether or not a
+     2026 party is on show */
+  if (S.view === 'lb' && !(window.EL && window.EL[2026])) {
+    render();
+    loadYear(2026).then(render);
+  } else render();
+};
 
 $('years').addEventListener('change', e => {
   const el = e.target;
+  if (el.dataset.d != null) {
+    const k = el.dataset.d, at = S.demo.indexOf(k);
+    if (el.checked && at < 0) S.demo.push(k);
+    if (!el.checked && at >= 0) S.demo.splice(at, 1);
+    if (S.demo.length && !window.DEMO) { render(); loadDemo().then(render); }
+    else render();
+    return;
+  }
   if (el.dataset.p != null) {
     const y = +el.dataset.y, i = +el.dataset.p;
     const list = S.sel[y] || (S.sel[y] = []);
